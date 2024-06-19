@@ -1,39 +1,50 @@
-# SBS click monitor script
 
-A Python script that monitors the click count of a sbs board and helps a bit with the clicks depending on thread count.
+# SBS page view "monitor"
 
-## Features
+This script monitors page views from a SBS Inkigayo board URL and will print the page views in the console. It can be configured to stop automatically when a maximum page view threshold is reached.
 
-- Configurable URL and number of threads.
-- Automatically converts a given URL to the corresponding API URL.
-- Handles JSONP responses and extracts the click count.
-- Prints the click count every minute.
-- Uses Python's `requests` library for HTTP requests.
-
-## Requirements
+## Prerequisites
 
 - Python 3.x
-- `requests` library
+- Required Python packages: `requests`, `pytz`
 
-## Installation
-
-1. Clone the repository:
-    ```bash
-    git clone https://github.com/Dawok/sbss.git
-    cd sbss
-    ```
-
-2. Install the required library:
-    ```bash
-    pip install requests
-    ```
+Install the required packages using pip:
+```bash
+pip install requests pytz
+```
 
 ## Configuration
 
-Edit the `config.json` file in the root directory of the project with the following structure:
+The script uses a configuration file (`config.json`) for its settings:
 
 ```json
 {
-    "url": "BOARD_URL",
-    "threads": 5
+    "url": "",
+    "threads": 5,
+    "max_page_views": 1000000,
+    "timezone": "Asia/Seoul"
 }
+```
+
+- **url**: The URL of the webpage whose page views are monitored. The script automatically constructs the API URL from this.
+- **threads**: Number of threads to run concurrently for monitoring.
+- **max_page_views**: The script stops automatically when the page views reach or exceed this number.
+- **timezone**: Timezone used for displaying timestamps in the output. Uses the system local time if not specified or if an invalid timezone is provided.
+
+## How to Run
+
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/Dawok/sbss
+   cd sbss
+   ```
+
+2. **Configure `config.json`**:
+   - Modify `config.json` to specify the URL, number of threads, maximum page views, and timezone.
+
+3. **Run the script**:
+   Execute the Python script `sbs.py`:
+   ```bash
+   python sbs.py
+   ```
+
