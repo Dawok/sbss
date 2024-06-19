@@ -6,9 +6,9 @@ import requests
 from datetime import datetime
 import pytz
 
-# Global variables to store click count, max clicks, and a stop event
-click_count = 0
-max_clicks = 0
+# Global variables to store page views, max page views, and a stop event
+page_views = 0
+max_page_views = 0
 initial_update_done = False
 lock = threading.Lock()
 stop_event = threading.Event()
@@ -23,9 +23,9 @@ def construct_api_url(url):
     else:
         raise ValueError("Invalid URL format. Could not find 'board_no' parameter.")
 
-# Function to perform the HTTP request and extract click count
+# Function to perform the HTTP request and extract page views
 def http_request(url):
-    global click_count, initial_update_done
+    global page_views, initial_update_done
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.53 Safari/537.36'
     }
@@ -36,18 +36,18 @@ def http_request(url):
             jsonp_data = response.text
             json_data = json.loads(re.search(r'\((.*)\)', jsonp_data).group(1))  # Remove JSONP wrapping
             with lock:
-                new_click_count = int(json_data["Response_Data_For_Detail"].get("CLICK_CNT", 0))
-                if new_click_count != click_count or not initial_update_done:
-                    click_count = new_click_count
+                new_page_views = int(json_data["Response_Data_For_Detail"].get("CLICK_CNT", 0))
+                if new_page_views != page_views or not initial_update_done:
+                    page_views = new_page_views
                     current_time = datetime.now(tz).strftime('%Y-%m-%d %H:%M:%S %Z')
                     if not initial_update_done:
                         print(f"[{current_time}] Starting script for '{title}'")
                         initial_update_done = True
-                    print(f'[{current_time}] Total Click Count: {click_count}')
-                    if click_count >= max_clicks:
+                    print(f'[{current_time}] Page Views: {page_views}')
+                    if page_views >= max_page_views:
                         if not stop_event.is_set():
                             stop_event.set()
-                            print(f"[{current_time}] Click count reached {click_count}, stopping script.")
+                            print(f"[{current_time}] Page views reached {page_views}, stopping script.")
         except (requests.RequestException, json.JSONDecodeError, ValueError, TypeError) as e:
             print(f"Error during request or parsing JSON: {e}")
         
@@ -58,7 +58,7 @@ with open('config.json', 'r') as config_file:
     config = json.load(config_file)
     user_url = config['url']
     threads_count = config['threads']
-    max_clicks = config.get('max_clicks', 0)
+    max_page_views = config.get('max_page_views', 0)
     timezone = config.get('timezone', 'UTC')
 
 # Set timezone
