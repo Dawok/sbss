@@ -1,5 +1,4 @@
 
-# SBS page view "monitor"
 
 This script monitors page views from a SBS Inkigayo board URL and will print the page views in the console. It can be configured to stop automatically when a maximum page view threshold is reached.
 
