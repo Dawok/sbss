@@ -1,4 +1,4 @@
 {
     "url": "",
-    "threads": 5
-}
+    "threads": 5,
+    "max_clicks": 1000000
