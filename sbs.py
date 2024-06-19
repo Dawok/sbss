@@ -3,10 +3,13 @@ import time
 import json
 import re
 import requests
+from datetime import datetime, timedelta
 
-# Global variable to store click count and lock for thread-safe updates
+# Global variables to store click count, max clicks, and a stop event
 click_count = 0
+max_clicks = 0
 lock = threading.Lock()
+stop_event = threading.Event()
 
 # Function to construct the API URL from the provided URL
 def construct_api_url(url):
@@ -24,7 +27,7 @@ def http_request(url):
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.53 Safari/537.36'
     }
-    while True:
+    while not stop_event.is_set():
         try:
             response = requests.get(url, headers=headers)
             response.raise_for_status()
@@ -32,23 +35,35 @@ def http_request(url):
             json_data = json.loads(re.search(r'\((.*)\)', jsonp_data).group(1))  # Remove JSONP wrapping
             with lock:
                 click_count = int(json_data["Response_Data_For_Detail"].get("CLICK_CNT", 0))
+                if click_count >= max_clicks:
+                    if not stop_event.is_set():
+                        stop_event.set()
+                        print(f"Click count reached {click_count}, stopping script.")
         except (requests.RequestException, json.JSONDecodeError, ValueError, TypeError) as e:
             print(f"Error during request or parsing JSON: {e}")
         
         time.sleep(1)
 
-# Function to print the aggregated click count every minute
+# Function to print the aggregated click count 1 second after the minute mark
 def print_click_count():
-    while True:
-        time.sleep(60)
+    while not stop_event.is_set():
+        now = datetime.now()
+        next_minute = (now.replace(second=0, microsecond=0) + timedelta(minutes=1))
+        sleep_duration = (next_minute - now).total_seconds() + 1
+        time.sleep(sleep_duration)
+
         with lock:
             print(f'Total Click Count: {click_count}')
+            if click_count >= max_clicks:
+                stop_event.set()
+                return
 
 # Load configuration from JSON file
 with open('config.json', 'r') as config_file:
     config = json.load(config_file)
     user_url = config['url']
     threads_count = config['threads']
+    max_clicks = config.get('max_clicks', 0)
 
 # Construct the API URL from the provided URL
 api_url = construct_api_url(user_url)
@@ -82,14 +97,14 @@ for _ in range(threads_count):
 time.sleep(2)
 print(f'Initial Click Count: {click_count}')
 
-# Start a thread to print the click count every minute
+# Start a thread to print the click count 1 second after the minute mark
 print_thread = threading.Thread(target=print_click_count)
 print_thread.daemon = True
 print_thread.start()
 
 # Keep the main thread alive to allow threads to run
 try:
-    while True:
+    while not stop_event.is_set():
         time.sleep(1)
 except KeyboardInterrupt:
     print("Stopping script.")
