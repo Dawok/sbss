@@ -41,30 +41,31 @@ def http_request(url):
                     page_views = new_page_views
                     current_time = datetime.now(tz).strftime('%Y-%m-%d %H:%M:%S %Z')
                     if not initial_update_done:
-                        print(f"[{current_time}] Starting script for '{title}'")
                         initial_update_done = True
+                        send_start_discord_webhook(page_views, max_page_views, threads_count, current_time)
                     print(f'[{current_time}] Page Views: {page_views}')
                     if page_views >= max_page_views:
                         if not stop_event.is_set():
                             stop_event.set()
                             print(f"[{current_time}] Page views reached {page_views}, stopping script.")
-                            send_discord_webhook()
+                            send_threshold_discord_webhook(page_views, max_page_views, current_time)
         except (requests.RequestException, json.JSONDecodeError, ValueError, TypeError) as e:
             print(f"Error during request or parsing JSON: {e}")
         
         time.sleep(1)
 
-# Function to send Discord webhook with embed
-def send_discord_webhook():
+# Function to send Discord webhook with embed for script start
+def send_start_discord_webhook(current_views, target_views, thread_count, current_time):
     webhook_url = config.get('discord_webhook')
     if webhook_url:
-        current_time = datetime.now(tz).isoformat()
         embed = {
             "embeds": [{
-                "title": title,
-                "description": f"The page views reached {page_views}. Stopping script.",
-                "color": 3066993,
-                "timestamp": current_time
+                "title": f"Script Started for '{title}'",
+                "description": f"Current Page Views: {current_views}\nTarget Page Views: {target_views}\nThread Count: {thread_count}",
+                "color": 3447003,  # Green color
+                "footer": {
+                    "text": f"Script started at {current_time}"
+                }
             }]
         }
         headers = {
@@ -73,9 +74,34 @@ def send_discord_webhook():
         try:
             response = requests.post(webhook_url, json=embed, headers=headers)
             response.raise_for_status()
-            print(f"[{current_time}] Discord webhook sent successfully.")
+            print(f"[{current_time}] Discord webhook sent successfully for script start.")
         except requests.RequestException as e:
-            print(f"Error sending Discord webhook: {e}")
+            print(f"Error sending Discord webhook for script start: {e}")
+
+# Function to send Discord webhook with embed for threshold reached
+def send_threshold_discord_webhook(current_views, target_views, current_time):
+    webhook_url = config.get('discord_webhook')
+    if webhook_url:
+        embed = {
+            "embeds": [{
+                "title": "Page Views Reached!",
+                "description": f"The page views reached {current_views}. Stopping script.",
+                "color": 15158332,  # Red color
+                "timestamp": current_time,
+                "footer": {
+                    "text": f"Threshold reached at {current_time}"
+                }
+            }]
+        }
+        headers = {
+            "Content-Type": "application/json"
+        }
+        try:
+            response = requests.post(webhook_url, json=embed, headers=headers)
+            response.raise_for_status()
+            print(f"[{current_time}] Discord webhook sent successfully for threshold reached.")
+        except requests.RequestException as e:
+            print(f"Error sending Discord webhook for threshold reached: {e}")
 
 # Load configuration from JSON file
 with open('config.json', 'r') as config_file:
