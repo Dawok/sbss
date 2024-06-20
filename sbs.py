@@ -62,7 +62,7 @@ def send_start_discord_webhook(current_views, target_views, thread_count, curren
             "embeds": [{
                 "title": f"Script Started for '{title}'",
                 "description": f"Current Page Views: {current_views}\nTarget Page Views: {target_views}\nThread Count: {thread_count}",
-                "color": 3447003,  # Green color
+                "color": 3447003,
                 "footer": {
                     "text": f"Script started at {current_time}"
                 }
@@ -84,10 +84,9 @@ def send_threshold_discord_webhook(current_views, target_views, current_time):
     if webhook_url:
         embed = {
             "embeds": [{
-                "title": "Page Views Reached!",
+                "title": f"Page Views Reached for '{title}'!",
                 "description": f"The page views reached {current_views}. Stopping script.",
-                "color": 15158332,  # Red color
-                "timestamp": current_time,
+                "color": 3066993,
                 "footer": {
                     "text": f"Threshold reached at {current_time}"
                 }
