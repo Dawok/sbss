@@ -48,10 +48,34 @@ def http_request(url):
                         if not stop_event.is_set():
                             stop_event.set()
                             print(f"[{current_time}] Page views reached {page_views}, stopping script.")
+                            send_discord_webhook()
         except (requests.RequestException, json.JSONDecodeError, ValueError, TypeError) as e:
             print(f"Error during request or parsing JSON: {e}")
         
         time.sleep(1)
+
+# Function to send Discord webhook with embed
+def send_discord_webhook():
+    webhook_url = config.get('discord_webhook')
+    if webhook_url:
+        current_time = datetime.now(tz).isoformat()
+        embed = {
+            "embeds": [{
+                "title": title,
+                "description": f"The page views reached {page_views}. Stopping script.",
+                "color": 3066993,
+                "timestamp": current_time
+            }]
+        }
+        headers = {
+            "Content-Type": "application/json"
+        }
+        try:
+            response = requests.post(webhook_url, json=embed, headers=headers)
+            response.raise_for_status()
+            print(f"[{current_time}] Discord webhook sent successfully.")
+        except requests.RequestException as e:
+            print(f"Error sending Discord webhook: {e}")
 
 # Load configuration from JSON file
 with open('config.json', 'r') as config_file:
