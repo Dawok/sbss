@@ -2,6 +2,5 @@
     "url": "",
     "threads": 5,
     "max_page_views": 1000000,
-    "timezone": "Asia/Seoul",
     "discord_webhook": "YOUR_DISCORD_WEBHOOK_URL"
 }
