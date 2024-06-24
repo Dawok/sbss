@@ -67,7 +67,7 @@ def send_start_discord_webhook(current_views, target_views, thread_count, curren
             "embeds": [{
                 "title": f"Script Started for '{title}' on {hostname}",
                 "description": f"Current Page Views: {current_views}\nTarget Page Views: {target_views}\nThread Count: {thread_count}",
-                "color": 3447003,  # Green color
+                "color": 3447003,
                 "footer": {
                     "text": f"Script started at {current_time}"
                 }
@@ -91,7 +91,7 @@ def send_threshold_discord_webhook(current_views, target_views, current_time):
             "embeds": [{
                 "title": f"Page Views Reached on {hostname}!",
                 "description": f"The page views reached {current_views}. Stopping script.",
-                "color": 15158332,  # Red color
+                "color": 6029150,
                 "footer": {
                     "text": f"Threshold reached at {current_time}"
                 }
@@ -115,7 +115,7 @@ def send_error_discord_webhook(error_message, current_time):
             "embeds": [{
                 "title": f"HTTP Error Encountered on {hostname}",
                 "description": f"An error occurred: {error_message}",
-                "color": 15158332,  # Red color
+                "color": 15158332,
                 "footer": {
                     "text": f"Error encountered at {current_time}"
                 }
