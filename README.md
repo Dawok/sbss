@@ -4,7 +4,7 @@ This script monitors page views from a SBS Inkigayo board URL. It can be configu
 ## Prerequisites
 
 - Python 3.x
-- Required Python packages: `requests`, `pytz`
+- Required Python packages: `requests`
 
 Install the required packages using pip:
 ```bash
@@ -20,14 +20,14 @@ The script uses a configuration file (`config.json`) for its settings:
     "url": "",
     "threads": 5,
     "max_page_views": 1000000,
-    "timezone": "Asia/Seoul"
+    "discord_webhook": "YOUR_DISCORD_WEBHOOK_URL"
 }
 ```
 
 - **url**: The URL of the webpage whose page views are monitored. The script automatically constructs the API URL from this.
 - **threads**: Number of threads to run concurrently for monitoring.
 - **max_page_views**: The script stops automatically when the page views reach or exceed this number.
-- **timezone**: Timezone used for displaying timestamps in the output. Uses the system local time if not specified or if an invalid timezone is provided.
+- **discord_webhook**: Discord webhook to send info via webhook to discord channel
 
 ## How to Run
 
