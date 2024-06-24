@@ -4,14 +4,15 @@ import json
 import re
 import requests
 from datetime import datetime
-import pytz
+import socket
 
-# Global variables to store page views, max page views, and a stop event
 page_views = 0
 max_page_views = 0
 initial_update_done = False
 lock = threading.Lock()
 stop_event = threading.Event()
+error_sent = False
+hostname = socket.gethostname()
 
 # Function to construct the API URL from the provided URL
 def construct_api_url(url):
@@ -25,7 +26,7 @@ def construct_api_url(url):
 
 # Function to perform the HTTP request and extract page views
 def http_request(url):
-    global page_views, initial_update_done
+    global page_views, initial_update_done, error_sent
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.53 Safari/537.36'
     }
@@ -39,7 +40,7 @@ def http_request(url):
                 new_page_views = int(json_data["Response_Data_For_Detail"].get("CLICK_CNT", 0))
                 if new_page_views != page_views or not initial_update_done:
                     page_views = new_page_views
-                    current_time = datetime.now(tz).strftime('%Y-%m-%d %H:%M:%S %Z')
+                    current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
                     if not initial_update_done:
                         initial_update_done = True
                         send_start_discord_webhook(page_views, max_page_views, threads_count, current_time)
@@ -50,7 +51,11 @@ def http_request(url):
                             print(f"[{current_time}] Page views reached {page_views}, stopping script.")
                             send_threshold_discord_webhook(page_views, max_page_views, current_time)
         except (requests.RequestException, json.JSONDecodeError, ValueError, TypeError) as e:
-            print(f"Error during request or parsing JSON: {e}")
+            current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            print(f"[{current_time}] Error during request or parsing JSON: {e}")
+            if not error_sent:
+                send_error_discord_webhook(str(e), current_time)
+                error_sent = True
         
         time.sleep(1)
 
@@ -60,9 +65,9 @@ def send_start_discord_webhook(current_views, target_views, thread_count, curren
     if webhook_url:
         embed = {
             "embeds": [{
-                "title": f"Script Started for '{title}'",
+                "title": f"Script Started for '{title}' on {hostname}",
                 "description": f"Current Page Views: {current_views}\nTarget Page Views: {target_views}\nThread Count: {thread_count}",
-                "color": 3447003,
+                "color": 3447003,  # Green color
                 "footer": {
                     "text": f"Script started at {current_time}"
                 }
@@ -84,9 +89,9 @@ def send_threshold_discord_webhook(current_views, target_views, current_time):
     if webhook_url:
         embed = {
             "embeds": [{
-                "title": f"Page Views Reached for '{title}'!",
+                "title": f"Page Views Reached on {hostname}!",
                 "description": f"The page views reached {current_views}. Stopping script.",
-                "color": 3066993,
+                "color": 15158332,  # Red color
                 "footer": {
                     "text": f"Threshold reached at {current_time}"
                 }
@@ -102,27 +107,36 @@ def send_threshold_discord_webhook(current_views, target_views, current_time):
         except requests.RequestException as e:
             print(f"Error sending Discord webhook for threshold reached: {e}")
 
+# Function to send Discord webhook with embed for HTTP error
+def send_error_discord_webhook(error_message, current_time):
+    webhook_url = config.get('discord_webhook')
+    if webhook_url:
+        embed = {
+            "embeds": [{
+                "title": f"HTTP Error Encountered on {hostname}",
+                "description": f"An error occurred: {error_message}",
+                "color": 15158332,  # Red color
+                "footer": {
+                    "text": f"Error encountered at {current_time}"
+                }
+            }]
+        }
+        headers = {
+            "Content-Type": "application/json"
+        }
+        try:
+            response = requests.post(webhook_url, json=embed, headers=headers)
+            response.raise_for_status()
+            print(f"[{current_time}] Discord webhook sent successfully for HTTP error.")
+        except requests.RequestException as e:
+            print(f"Error sending Discord webhook for HTTP error: {e}")
+
 # Load configuration from JSON file
 with open('config.json', 'r') as config_file:
     config = json.load(config_file)
     user_url = config['url']
     threads_count = config['threads']
     max_page_views = config.get('max_page_views', 0)
-    timezone = config.get('timezone', 'UTC')
-
-# Set timezone
-if timezone:
-    try:
-        tz = pytz.timezone(timezone)
-    except pytz.UnknownTimeZoneError:
-        print(f"Unknown timezone: {timezone}. Using system local time instead.")
-        tz = None
-else:
-    tz = None
-
-# Use local timezone if no timezone is specified or an error occurs
-if tz is None:
-    tz = datetime.now().astimezone().tzinfo
 
 # Construct the API URL from the provided URL
 api_url = construct_api_url(user_url)
@@ -142,7 +156,7 @@ except (requests.RequestException, json.JSONDecodeError, ValueError, TypeError) 
     title = "Unknown Title"
 
 # Start the initial message to indicate the script is running
-current_time = datetime.now(tz).strftime('%Y-%m-%d %H:%M:%S %Z')
+current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 # Start the specified number of threads
 threads = []
