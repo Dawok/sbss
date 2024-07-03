@@ -88,12 +88,14 @@ def send_start_discord_webhook(current_views, target_views, thread_count, curren
 # Function to send Discord webhook with embed for threshold reached
 def send_threshold_discord_webhook(current_views, target_views, current_time):
     webhook_url = config.get('discord_webhook')
+    url = config.get('url')
     if webhook_url:
         embed = {
             "embeds": [{
                 "title": f"Page Views Reached on {hostname}!",
                 "description": f"The page views reached {current_views}. Stopping script.",
                 "color": 6029150,
+                "url": url,
                 "footer": {
                     "text": f"Threshold reached at {current_time}"
                 }
