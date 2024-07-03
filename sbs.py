@@ -62,12 +62,14 @@ def http_request(url):
 # Function to send Discord webhook with embed for script start
 def send_start_discord_webhook(current_views, target_views, thread_count, current_time):
     webhook_url = config.get('discord_webhook')
+    url = config.get('url')
     if webhook_url:
         embed = {
             "embeds": [{
                 "title": f"Script Started for '{title}' on {hostname}",
                 "description": f"Current Page Views: {current_views}\nTarget Page Views: {target_views}\nThread Count: {thread_count}",
                 "color": 3447003,
+                "url": url
                 "footer": {
                     "text": f"Script started at {current_time}"
                 }
