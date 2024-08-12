@@ -69,7 +69,7 @@ def send_start_discord_webhook(current_views, target_views, thread_count, curren
                 "title": f"Script Started for '{title}' on {hostname}",
                 "description": f"Current Page Views: {current_views}\nTarget Page Views: {target_views}\nThread Count: {thread_count}",
                 "color": 3447003,
-                "url": url
+		"url": url,
                 "footer": {
                     "text": f"Script started at {current_time}"
                 }
