@@ -13,8 +13,6 @@ lock = threading.Lock()
 stop_event = threading.Event()
 error_sent = False
 hostname = socket.gethostname()
-total_requests = 0
-thread_request_counts = {}
 
 # Function to construct the API URL from the provided URL
 def construct_api_url(url):
@@ -27,15 +25,11 @@ def construct_api_url(url):
         raise ValueError("Invalid URL format. Could not find 'board_no' parameter.")
 
 # Function to perform the HTTP request and extract page views
-def http_request(url, thread_id):
-    global page_views, initial_update_done, error_sent, total_requests, thread_request_counts
+def http_request(url):
+    global page_views, initial_update_done, error_sent
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.53 Safari/537.36'
     }
-    
-    # Initialize per-thread request count
-    thread_request_counts[thread_id] = 0
-    
     while not stop_event.is_set():
         try:
             response = requests.get(url, headers=headers)
@@ -47,16 +41,10 @@ def http_request(url, thread_id):
                 if new_page_views != page_views or not initial_update_done:
                     page_views = new_page_views
                     current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                    
-                    # Update global request count
-                    total_requests += 1
-                    thread_request_counts[thread_id] += 1  # Track requests for this thread
-                    
                     if not initial_update_done:
                         initial_update_done = True
                         send_start_discord_webhook(page_views, max_page_views, threads_count, current_time)
-                    print(f'[{current_time}] Page Views: {page_views}, Total Requests: {total_requests}')
-                    
+                    print(f'[{current_time}] Page Views: {page_views}')
                     if page_views >= max_page_views:
                         if not stop_event.is_set():
                             stop_event.set()
@@ -81,7 +69,7 @@ def send_start_discord_webhook(current_views, target_views, thread_count, curren
                 "title": f"Script Started for '{title}' on {hostname}",
                 "description": f"Current Page Views: {current_views}\nTarget Page Views: {target_views}\nThread Count: {thread_count}",
                 "color": 3447003,
-                "url": url,
+		"url": url,
                 "footer": {
                     "text": f"Script started at {current_time}"
                 }
@@ -176,8 +164,9 @@ current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
 # Start the specified number of threads
 threads = []
-for i in range(threads_count):
-    thread = threading.Thread(target=http_request, args=(api_url, i))
+for _ in range(threads_count):
+    thread = threading.Thread(target=http_request, args=(api_url,))
+    thread.daemon = True  # This allows the threads to exit when the main program exits
     thread.start()
     threads.append(thread)
 
@@ -187,12 +176,3 @@ try:
         time.sleep(1)
 except KeyboardInterrupt:
     print("Stopping script.")
-finally:
-    # Ensure all threads have finished
-    for thread in threads:
-        thread.join()
-    
-    # Print the total accepted requests and per-thread counts
-    print(f"Total accepted requests: {total_requests}")
-    for thread_id, count in thread_request_counts.items():
-        print(f"Thread {thread_id} made {count} requests")
