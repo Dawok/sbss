@@ -13,7 +13,6 @@ lock = threading.Lock()
 stop_event = threading.Event()
 error_sent = False
 hostname = socket.gethostname()
-total_requests = 0
 
 # Function to construct the API URL from the provided URL
 def construct_api_url(url):
@@ -27,7 +26,7 @@ def construct_api_url(url):
 
 # Function to perform the HTTP request and extract page views
 def http_request(url):
-    global page_views, initial_update_done, error_sent, total_requests
+    global page_views, initial_update_done, error_sent
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.53 Safari/537.36'
     }
@@ -42,7 +41,6 @@ def http_request(url):
                 if new_page_views != page_views or not initial_update_done:
                     page_views = new_page_views
                     current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                    total_requests += 1
                     if not initial_update_done:
                         initial_update_done = True
                         send_start_discord_webhook(page_views, max_page_views, threads_count, current_time)
@@ -71,7 +69,7 @@ def send_start_discord_webhook(current_views, target_views, thread_count, curren
                 "title": f"Script Started for '{title}' on {hostname}",
                 "description": f"Current Page Views: {current_views}\nTarget Page Views: {target_views}\nThread Count: {thread_count}",
                 "color": 3447003,
-                "url": url,
+		"url": url,
                 "footer": {
                     "text": f"Script started at {current_time}"
                 }
@@ -178,10 +176,3 @@ try:
         time.sleep(1)
 except KeyboardInterrupt:
     print("Stopping script.")
-finally:
-    # Ensure all threads have finished
-    for thread in threads:
-        thread.join()
-    
-    # When the script ends, print the total accepted requests
-    print(f"Total accepted requests: {total_requests}")
