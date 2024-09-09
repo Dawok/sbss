@@ -13,6 +13,7 @@ lock = threading.Lock()
 stop_event = threading.Event()
 error_sent = False
 hostname = socket.gethostname()
+total_requests = 0
 
 # Function to construct the API URL from the provided URL
 def construct_api_url(url):
@@ -26,7 +27,7 @@ def construct_api_url(url):
 
 # Function to perform the HTTP request and extract page views
 def http_request(url):
-    global page_views, initial_update_done, error_sent
+    global page_views, initial_update_done, error_sent, total_requests
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.5060.53 Safari/537.36'
     }
@@ -41,6 +42,7 @@ def http_request(url):
                 if new_page_views != page_views or not initial_update_done:
                     page_views = new_page_views
                     current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                    total_requests += 1
                     if not initial_update_done:
                         initial_update_done = True
                         send_start_discord_webhook(page_views, max_page_views, threads_count, current_time)
@@ -58,7 +60,7 @@ def http_request(url):
                 error_sent = True
         
         time.sleep(1)
-
+	    
 # Function to send Discord webhook with embed for script start
 def send_start_discord_webhook(current_views, target_views, thread_count, current_time):
     webhook_url = config.get('discord_webhook')
@@ -176,3 +178,6 @@ try:
         time.sleep(1)
 except KeyboardInterrupt:
     print("Stopping script.")
+finally:
+    # When the script ends, print the total accepted requests
+    print(f"Total accepted requests: {total_requests}")
