@@ -60,7 +60,7 @@ def http_request(url):
                 error_sent = True
         
         time.sleep(1)
-	    
+
 # Function to send Discord webhook with embed for script start
 def send_start_discord_webhook(current_views, target_views, thread_count, current_time):
     webhook_url = config.get('discord_webhook')
@@ -71,7 +71,7 @@ def send_start_discord_webhook(current_views, target_views, thread_count, curren
                 "title": f"Script Started for '{title}' on {hostname}",
                 "description": f"Current Page Views: {current_views}\nTarget Page Views: {target_views}\nThread Count: {thread_count}",
                 "color": 3447003,
-		"url": url,
+                "url": url,
                 "footer": {
                     "text": f"Script started at {current_time}"
                 }
@@ -179,5 +179,9 @@ try:
 except KeyboardInterrupt:
     print("Stopping script.")
 finally:
+    # Ensure all threads have finished
+    for thread in threads:
+        thread.join()
+    
     # When the script ends, print the total accepted requests
     print(f"Total accepted requests: {total_requests}")
