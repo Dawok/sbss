@@ -36,8 +36,14 @@ def http_request(url):
         try:
             response = requests.get(url, headers=headers)
             response.raise_for_status()  # Raise an error for bad HTTP responses
+            
+            # Print success (200 OK) for the thread
+            if response.status_code == 200:
+                print(f'[{datetime.now().strftime("%Y-%m-%d %H:%M:%S")}] [{thread_name}] 200 OK')
+
             jsonp_data = response.text
             json_data = json.loads(re.search(r'\((.*)\)', jsonp_data).group(1))  # Extract JSON data from JSONP response
+            
             with lock:  # Ensure safe update of shared resources
                 new_page_views = int(json_data["Response_Data_For_Detail"].get("CLICK_CNT", 0))
                 if new_page_views != page_views or not initial_update_done:
