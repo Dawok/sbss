@@ -3,7 +3,7 @@ import json
 import re
 import requests
 from datetime import datetime
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import ThreadPoolExecutor, as_completed
 import socket
 import threading
 
@@ -163,8 +163,15 @@ except (requests.RequestException, json.JSONDecodeError, ValueError, TypeError) 
 # Start the initial message to indicate the script is running
 current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-# Use ThreadPoolExecutor to run the requests concurrently
-with ThreadPoolExecutor(max_workers=threads_count) as executor:
-    futures = [executor.submit(http_request, api_url) for _ in range(threads_count)]
-    for future in futures:
-        future.result()  # To ensure any raised exception is captured
+try:
+    # Use ThreadPoolExecutor to run the requests concurrently
+    with ThreadPoolExecutor(max_workers=threads_count) as executor:
+        futures = [executor.submit(http_request, api_url) for _ in range(threads_count)]
+        for future in as_completed(futures):
+            try:
+                future.result()  # To ensure any raised exception is captured
+            except Exception as e:
+                print(f"Thread encountered an exception: {e}")
+except KeyboardInterrupt:
+    print("Stopping script.")
+    stop_event.set()  # Set the stop event to stop all threads
