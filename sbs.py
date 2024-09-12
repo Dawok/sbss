@@ -34,8 +34,6 @@ def http_request(url):
     while not stop_event.is_set():  # Continue looping until stop_event is set
         try:
             response = requests.get(url, headers=headers)
-            if response.status_code == 200:
-                print("200 OK")
             response.raise_for_status()
             jsonp_data = response.text
             json_data = json.loads(re.search(r'\((.*)\)', jsonp_data).group(1))  # Remove JSONP wrapping
