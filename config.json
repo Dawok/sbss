@@ -2,5 +2,7 @@
     "url": "",
     "threads": 5,
     "max_page_views": 1000000,
-    "discord_webhook": "YOUR_DISCORD_WEBHOOK_URL"
+    "request_interval": 0.5,
+    "discord_webhook": "YOUR_DISCORD_WEBHOOK_URL",
+    "max_consecutive_errors": 100
 }
